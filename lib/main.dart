@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity/connectivity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:website/myconnectivity.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
@@ -37,18 +39,30 @@ class _MyHomePageState extends State<MyHomePage> {
   final Completer<WebViewController> _controller =
       Completer<WebViewController>();
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  int number = 1;
+  int number = 0;
+  final MyConnectivity _connectivity = MyConnectivity.instance;
+  Map _source = {ConnectivityResult.none: false};
 
   @override
   void initState() {
     super.initState();
+    _connectivity.initialise();
+    _connectivity.myStream.listen((source) {
+      setState(() => _source = source);
+    });
     if (Platform.isAndroid) WebView.platform = AndroidWebView();
     _prefs.then((SharedPreferences prefs) {
-      if (prefs.getString('counter')! != null) {
-        number = int.parse(prefs.getString('counter')!);
+      if (prefs.getString('number')! != null) {
+        number = int.parse(prefs.getString('number')!);
         setState(() {});
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _connectivity.disposeStream();
+    super.dispose();
   }
 
   initPref() async {}
@@ -66,59 +80,90 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     initPref();
+    String string;
+    switch (_source.keys.toList()[0]) {
+      case ConnectivityResult.mobile:
+        string = 'Online';
+        break;
+      case ConnectivityResult.wifi:
+        string = 'Online';
+        break;
+      case ConnectivityResult.none:
+      default:
+        string = 'Offline';
+    }
     return Scaffold(
       body: SafeArea(
-        child: WebView(
-          initialUrl: 'https://kyrgyz.space/p/ekobak/basket.php?user=$number',
-          javascriptMode: JavascriptMode.unrestricted,
-          onWebViewCreated: (WebViewController webViewController) {
-            _prefs.then((SharedPreferences prefs) {
-              if (prefs.getString('number') == null) {
-                webViewController
-                    .loadUrl('http://kyrgyz.space/p/ekobak/get_user_id.php')
-                    .then((value2) {
-                  if (kDebugMode) {
-                    print('==============');
+        child: string == 'Online'
+            ? WebView(
+                initialUrl:
+                    'https://kyrgyz.space/p/ekobak/basket.php?user=$number',
+                javascriptMode: JavascriptMode.unrestricted,
+                onWebViewCreated: (WebViewController webViewController) {
+                  _prefs.then((SharedPreferences prefs) {
+                    if (prefs.getString('number') == null) {
+                      webViewController
+                          .loadUrl(
+                              'http://kyrgyz.space/p/ekobak/get_user_id.php')
+                          .then((value2) {
+                        if (kDebugMode) {
+                          print('==============');
+                        }
+                        return;
+                      });
+                    } else {
+                      number = int.parse(prefs.getString('number')!);
+                      webViewController
+                          .loadUrl(
+                              'https://kyrgyz.space/p/ekobak/basket.php?user=$number')
+                          .then((value2) {
+                        if (kDebugMode) {
+                          print('==============');
+                        }
+                        return;
+                      });
+                    }
+                  });
+                },
+                onProgress: (int progress) {
+                  print('WebView is loading (progress : $progress%)');
+                },
+                javascriptChannels: <JavascriptChannel>{
+                  _toasterJavascriptChannel(context),
+                },
+                navigationDelegate: (NavigationRequest request) {
+                  if (request.url.startsWith('https://www.youtube.com/')) {
+                    print('blocking navigation to $request}');
+                    return NavigationDecision.prevent;
                   }
-                  return;
-                });
-              }
-            });
-          },
-          onProgress: (int progress) {
-            print('WebView is loading (progress : $progress%)');
-          },
-          javascriptChannels: <JavascriptChannel>{
-            _toasterJavascriptChannel(context),
-          },
-          navigationDelegate: (NavigationRequest request) {
-            if (request.url.startsWith('https://www.youtube.com/')) {
-              print('blocking navigation to $request}');
-              return NavigationDecision.prevent;
-            }
-            print('allowing navigation to $request');
-            return NavigationDecision.navigate;
-          },
-          onPageStarted: (String url) {
-            print('Page started loading: $url');
-          },
-          onPageFinished: (String url) async {
-            print('Page finished loading: $url');
-            var index = url.indexOf('=');
-            print('NUMBER ${index}');
-            var number = url.substring(index, url.length);
-            print('NUMBER ${number}');
-            _prefs.then((SharedPreferences prefs) {
-              if (prefs.getString('number') == null) {
-                this.number = int.parse(number);
-                prefs.setString('number', number);
-                setState(() {});
-              }
-            });
-          },
-          gestureNavigationEnabled: true,
-          backgroundColor: const Color(0x00000000),
-        ),
+                  print('allowing navigation to $request');
+                  return NavigationDecision.navigate;
+                },
+                onPageStarted: (String url) {
+                  print('Page started loading: $url');
+                },
+                onPageFinished: (String url) async {
+                  print('Page finished loading: $url');
+                  if (url != '' && url != null) {
+                    var index = url.indexOf('=');
+                    print('NUMBER ${index}');
+                    if (index != -1) {
+                      var number = url.substring(index + 1, url.length);
+                      print('NUMBER ${number}');
+                      _prefs.then((SharedPreferences prefs) {
+                        if (prefs.getString('number') == null &&
+                            number != '0') {
+                          this.number = int.parse(number);
+                          prefs.setString('number', number);
+                          setState(() {});
+                        }
+                      });
+                    }
+                  }
+                },
+                backgroundColor: const Color(0x00000000),
+              )
+            : const Text('Offline'),
       ),
     );
   }
