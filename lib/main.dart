@@ -5,7 +5,6 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:website/myconnectivity.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
@@ -40,16 +39,28 @@ class _MyHomePageState extends State<MyHomePage> {
       Completer<WebViewController>();
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   int number = 0;
-  final MyConnectivity _connectivity = MyConnectivity.instance;
-  Map _source = {ConnectivityResult.none: false};
+  bool hasInternet = true;
 
   @override
   void initState() {
-    super.initState();
-    _connectivity.initialise();
-    _connectivity.myStream.listen((source) {
-      setState(() => _source = source);
+    InternetAddress.lookup('example.com').then((result) {
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        print('connected');
+        setState(() {
+          hasInternet = true;
+        });
+      } else {
+        print('disconnected');
+        setState(() {
+          hasInternet = false;
+        });
+      }
+    }).catchError((err) {
+      setState(() {
+        hasInternet = false;
+      });
     });
+    super.initState();
     if (Platform.isAndroid) WebView.platform = AndroidWebView();
     _prefs.then((SharedPreferences prefs) {
       if (prefs.getString('number')! != null) {
@@ -61,7 +72,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
-    _connectivity.disposeStream();
     super.dispose();
   }
 
@@ -79,23 +89,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    initPref();
-    String string;
-    switch (_source.keys.toList()[0]) {
-      case ConnectivityResult.mobile:
-        string = 'Online';
-        break;
-      case ConnectivityResult.wifi:
-        string = 'Online';
-        break;
-      case ConnectivityResult.none:
-      default:
-        string = 'Offline';
-    }
     return Scaffold(
-      body: SafeArea(
-        child: string == 'Online'
-            ? WebView(
+      body: hasInternet
+          ? SafeArea(
+              child: WebView(
                 initialUrl:
                     'https://kyrgyz.space/p/ekobak/basket.php?user=$number',
                 javascriptMode: JavascriptMode.unrestricted,
@@ -162,9 +159,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   }
                 },
                 backgroundColor: const Color(0x00000000),
-              )
-            : const Text('Offline'),
-      ),
+              ),
+            )
+          : const Center(
+              child: Text('You internet no connection'),
+            ),
     );
   }
 }

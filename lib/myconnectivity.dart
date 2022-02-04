@@ -27,7 +27,7 @@ class MyConnectivity {
   void _checkStatus(ConnectivityResult result) async {
     bool isOnline = false;
     try {
-      await Future.delayed(Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 500));
       final result = await InternetAddress.lookup('example.com');
       if (result.isNotEmpty) {
         isOnline = true;
