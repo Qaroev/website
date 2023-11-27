@@ -1,4 +1,4 @@
-package com.example.website
+package ru.ecoplantagro.com
 
 import io.flutter.embedding.android.FlutterActivity
 
