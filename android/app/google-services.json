@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1064636904002",
+    "project_id": "ecoplantagro",
+    "storage_bucket": "ecoplantagro.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064636904002:android:88e02a6fc2dee8579cf3db",
+        "android_client_info": {
+          "package_name": "ru.ecoplantagro.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1064636904002-m39coc7nvqvt0frhgef64uniscbh4ofe.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4dNWeqX1S3L0jDwGBrA5M-utdfxjHndA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1064636904002-m39coc7nvqvt0frhgef64uniscbh4ofe.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

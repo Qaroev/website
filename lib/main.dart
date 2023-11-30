@@ -1,74 +1,152 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'dart:convert';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:website/webview_page.dart';
+
+import 'firebase_options.dart';
+
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  "high_importance_channel",
+  "High Importance Notifications",
+  importance: Importance.high,
+);
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
+
+@pragma("vm:entry-point")
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  var items = jsonDecode(message.data["body"]);
+  var title = message.data['title'];
+  var body = items["content"];
+  id = items["chat_id"];
+  if (title != null && body != null) {
+    flutterLocalNotificationsPlugin.show(
+        0,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channel.id,
+            channel.name,
+            icon: '@drawable/logo',
+            importance: Importance.max,
+            priority: Priority.high,
+            ticker: 'ticker',
+            playSound: true,
+            showWhen: true,
+          ),
+        ),
+        payload: '');
+  }
+  print('Handling a background message ${message.messageId}');
+}
+
+bool isLogin = false;
+var id = -1;
+
+main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await FirebaseMessaging.instance.getAPNSToken();
+  FirebaseMessaging.instance.requestPermission();
+  await Permission.notification.isDenied.then((value) {
+    if (value) {
+      Permission.notification.request();
+    }
+  });
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    print("FirebaseMessaging.getInitialMessage");
+    if (message != null) {}
+  });
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    var initializationSettingsAndroid =
+    const AndroidInitializationSettings('@drawable/ic_stat_ecoplantagro__2');
+
+    var initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onDidReceiveNotificationResponse:
+            (NotificationResponse? notificationResponse) async {
+          if (notificationResponse != null) {
+          }
+        });
+    var items = jsonDecode(message.data["body"]);
+    var title = message.data['title'];
+    var body = items["content"];
+    id = items["chat_id"];
+    if (title != null && body != null) {
+      flutterLocalNotificationsPlugin.show(
+          0,
+          title,
+          body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              icon: '@drawable/logo',
+              importance: Importance.max,
+              priority: Priority.high,
+              ticker: 'ticker',
+              playSound: true,
+              showWhen: true,
+            ),
+          ),
+          payload: '');
+    }
+  });
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    var items = jsonDecode(message.data["body"]);
+    var title = message.data['title'];
+    var body = items["content"];
+    id = items["chat_id"];
+    if (title != null && body != null) {
+      flutterLocalNotificationsPlugin.show(
+          0,
+          title,
+          body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              icon: '@drawable/logo',
+              importance: Importance.max,
+              priority: Priority.high,
+              ticker: 'ticker',
+              playSound: true,
+              showWhen: true,
+            ),
+          ),
+          payload: '');
+    }
+  });
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
-  int number = 0;
-  bool hasInternet = true;
-  late final WebViewController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000))
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) {
-            // Update loading bar.
-          },
-          onPageStarted: (String url) {},
-          onPageFinished: (String url) {},
-          onWebResourceError: (WebResourceError error) {},
-          onNavigationRequest: (NavigationRequest request) {
-            return NavigationDecision.navigate;
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse('https://ru.ecoplantagro.com'));
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  initPref() async {}
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(child: WebViewWidget(controller: _controller)),
+      home: WebviewPage(),
     );
   }
 }
