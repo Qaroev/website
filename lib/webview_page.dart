@@ -1,13 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:http/http.dart' as http;
-import 'package:permission_handler/permission_handler.dart';
-
-import 'main.dart';
 
 InAppWebViewController? webViewController;
 
@@ -102,17 +96,6 @@ class _WebviewState extends State<WebviewPage> {
                   ),
                 ),
               ]))),
-    );
-  }
-
-  void _setupJavaScriptBridge() {
-    webViewController!.addJavaScriptHandler(
-      handlerName: 'sendValueToFlutter',
-      callback: (data) {
-        // Handle the data received from JavaScript
-        String value = data.toString();
-        // Do something with the value from the WebView
-      },
     );
   }
 }
