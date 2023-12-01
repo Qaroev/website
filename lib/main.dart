@@ -34,7 +34,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           android: AndroidNotificationDetails(
             channel.id,
             channel.name,
-            icon: '@drawable/logo',
+            icon: '@drawable/ic_stat_ecoplantagro__2',
             importance: Importance.max,
             priority: Priority.high,
             ticker: 'ticker',
@@ -86,10 +86,8 @@ main() async {
           if (notificationResponse != null) {
           }
         });
-    var items = jsonDecode(message.data["body"]);
     var title = message.data['title'];
-    var body = items["content"];
-    id = items["chat_id"];
+    var body = message.data["body"];
     if (title != null && body != null) {
       flutterLocalNotificationsPlugin.show(
           0,
@@ -99,7 +97,7 @@ main() async {
             android: AndroidNotificationDetails(
               channel.id,
               channel.name,
-              icon: '@drawable/logo',
+              icon: '@drawable/ic_stat_ecoplantagro__2',
               importance: Importance.max,
               priority: Priority.high,
               ticker: 'ticker',
@@ -111,10 +109,8 @@ main() async {
     }
   });
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    var items = jsonDecode(message.data["body"]);
     var title = message.data['title'];
-    var body = items["content"];
-    id = items["chat_id"];
+    var body = message.data["body"];
     if (title != null && body != null) {
       flutterLocalNotificationsPlugin.show(
           0,
@@ -124,7 +120,7 @@ main() async {
             android: AndroidNotificationDetails(
               channel.id,
               channel.name,
-              icon: '@drawable/logo',
+              icon: '@drawable/ic_stat_ecoplantagro__2',
               importance: Importance.max,
               priority: Priority.high,
               ticker: 'ticker',

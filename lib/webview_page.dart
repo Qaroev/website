@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -19,6 +21,7 @@ class _WebviewState extends State<WebviewPage> {
   bool shouldShowBottomNav = false;
   bool shouldShowSearchBar = false;
   bool shouldShowFAB = false;
+  bool isLogin = false;
 
   TextEditingController textFieldController = TextEditingController();
 
@@ -75,14 +78,35 @@ class _WebviewState extends State<WebviewPage> {
                             webViewController = controller;
                           },
                           onConsoleMessage: (controller, consoleMessage) async {
-                            final response = await http.post(
-                              Uri.parse(
-                                  "https://ru.ecoplantagro.com/pwa/current.php"),
-                              body: {'token': fcmToken},
-                            );
-                            if (response.statusCode != 200) {
-                            } else {
-                              print(fcmToken);
+                            dynamic docu = await webViewController!
+                                .evaluateJavascript(
+                                    source:
+                                        'javascript:window.localStorage.getItem("id")');
+                            if (docu != null && isLogin == false) {
+                              final response = await http.post(
+                                Uri.parse(
+                                    "https://ru.ecoplantagro.com/pwa/current.php"),
+                                body: {
+                                  'token': fcmToken,
+                                  "id": docu,
+                                },
+                              );
+                              if (response.statusCode != 200) {
+                                var snackBar = SnackBar(
+                                  content: Text(
+                                      'You Error token ${json.encode(response.body)}'),
+                                );
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(snackBar);
+                              } else {
+                                isLogin = true;
+                                print(fcmToken);
+                                var snackBar = SnackBar(
+                                  content: Text('You ID $docu You token $fcmToken'),
+                                );
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(snackBar);
+                              }
                             }
                           },
                           androidOnPermissionRequest:
