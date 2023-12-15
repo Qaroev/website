@@ -66,6 +66,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'doctorchat-push.appspot.com',
     iosClientId:
         '151465342526-uj30l7265j56b964uctmpdvq04aabfie.apps.googleusercontent.com',
-    iosBundleId: 'com.isushop.isu',
+    iosBundleId: 'ecoplantagro',
   );
 }

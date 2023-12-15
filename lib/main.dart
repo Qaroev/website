@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:notification_permissions/notification_permissions.dart' as pr;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:website/webview_page.dart';
 
@@ -16,15 +17,13 @@ const AndroidNotificationChannel channel = AndroidNotificationChannel(
   importance: Importance.high,
 );
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
+    FlutterLocalNotificationsPlugin();
 
 @pragma("vm:entry-point")
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  var items = jsonDecode(message.data["body"]);
   var title = message.data['title'];
-  var body = items["content"];
-  id = items["chat_id"];
+  var body = message.data["body"];
   if (title != null && body != null) {
     flutterLocalNotificationsPlugin.show(
         0,
@@ -55,15 +54,21 @@ main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await FirebaseMessaging.instance.getAPNSToken();
   FirebaseMessaging.instance.requestPermission();
-  await Permission.notification.isDenied.then((value) {
-    if (value) {
-      Permission.notification.request();
-    }
-  });
+  // final PermissionStatus status = await Permission.notification.request();
+  // if (status.isGranted) {
+  // } else if (status.isDenied) {
+  //   Permission.notification.request();
+  // } else if (status.isPermanentlyDenied) {
+  //   // Notification permissions permanently denied, open app settings
+  //   await openAppSettings();
+  // }
+  Future<pr.PermissionStatus> permissionStatus =
+      pr.NotificationPermissions.getNotificationPermissionStatus();
+  print(permissionStatus);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
     alert: true,
@@ -75,17 +80,16 @@ main() async {
     if (message != null) {}
   });
   FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-    var initializationSettingsAndroid =
-    const AndroidInitializationSettings('@drawable/ic_stat_ecoplantagro__2');
+    var initializationSettingsAndroid = const AndroidInitializationSettings(
+        '@drawable/ic_stat_ecoplantagro__2');
 
     var initializationSettings =
-    InitializationSettings(android: initializationSettingsAndroid);
+        InitializationSettings(android: initializationSettingsAndroid);
     await flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onDidReceiveNotificationResponse:
             (NotificationResponse? notificationResponse) async {
-          if (notificationResponse != null) {
-          }
-        });
+      if (notificationResponse != null) {}
+    });
     var title = message.data['title'];
     var body = message.data["body"];
     if (title != null && body != null) {

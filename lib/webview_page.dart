@@ -92,20 +92,20 @@ class _WebviewState extends State<WebviewPage> {
                                 },
                               );
                               if (response.statusCode != 200) {
-                                var snackBar = SnackBar(
-                                  content: Text(
-                                      'You Error token ${json.encode(response.body)}'),
-                                );
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(snackBar);
+                                // var snackBar = SnackBar(
+                                //   content: Text(
+                                //       'You Error token ${json.encode(response.body)}'),
+                                // );
+                                // ScaffoldMessenger.of(context)
+                                //     .showSnackBar(snackBar);
                               } else {
                                 isLogin = true;
                                 print(fcmToken);
-                                var snackBar = SnackBar(
-                                  content: Text('You ID $docu You token $fcmToken'),
-                                );
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(snackBar);
+                                // var snackBar = SnackBar(
+                                //   content: Text('You ID $docu You token $fcmToken'),
+                                // );
+                                // ScaffoldMessenger.of(context)
+                                //     .showSnackBar(snackBar);
                               }
                             }
                           },
